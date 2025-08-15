@@ -89,24 +89,99 @@ data_analysis/
 
 ## Usage Guide
 
+### Refactored Analysis Notebook (EDA_Refactored.ipynb)
+
+The refactored notebook provides a complete, professional analysis framework with improved structure and documentation:
+
+#### Key Improvements Over Original EDA:
+
+1. **Structured Documentation**: Clear sections with table of contents and business objectives
+2. **Configurable Analysis**: Easy-to-change parameters for different time periods
+3. **Data Dictionary**: Comprehensive explanation of business terms and metrics
+4. **Modular Code**: Reusable functions from imported modules
+5. **Enhanced Visualizations**: Professional charts with proper titles, labels, and formatting
+6. **Strategic Insights**: Automated recommendations based on analysis results
+
+#### Quick Start Guide:
+
+1. **Open the notebook**: Launch Jupyter and open `EDA_Refactored.ipynb`
+
+2. **Set analysis parameters** (Cell 2):
+   ```python
+   ANALYSIS_YEAR = 2023        # Primary year to analyze
+   COMPARISON_YEAR = 2022      # Year for comparison (set to None to disable)
+   ANALYSIS_MONTH = None       # Specific month (1-12) or None for full year
+   ```
+
+3. **Run all cells** to generate the complete analysis with:
+   - Executive summary with key metrics
+   - Revenue trend analysis and growth rates
+   - Product category performance rankings
+   - Geographic market analysis with interactive maps
+   - Customer satisfaction and delivery performance metrics
+   - Strategic recommendations based on findings
+
+4. **Customize for different periods**:
+   ```python
+   # Analyze Q1 2023 vs Q1 2022
+   ANALYSIS_MONTH = [1, 2, 3]  # Can be modified in data_loader.py
+   
+   # Analyze just December 2023
+   ANALYSIS_MONTH = 12
+   ```
+
 ### Streamlit Dashboard
+
+The professional Streamlit dashboard provides a comprehensive business analytics interface with real-time filtering and interactive visualizations.
+
+#### Dashboard Layout Structure
+
+1. **Header**: 
+   - Title on the left: "E-commerce Analytics Dashboard"
+   - Date range filter on the right (applies globally to all charts)
+
+2. **KPI Row** (4 cards with uniform height):
+   - **Total Revenue**: Current year total with trend indicator vs previous year
+   - **Monthly Growth**: Average month-over-month growth with trend arrow
+   - **Average Order Value**: Current AOV with trend indicator vs previous year  
+   - **Total Orders**: Current year count with trend indicator vs previous year
+   - All trend indicators show two decimal places with red/green color coding
+
+3. **Charts Grid** (2x2 layout):
+   - **Revenue Trend**: Line chart with solid line for current year, dashed line for previous year, grid lines, Y-axis formatted as $300K
+   - **Top 10 Categories**: Horizontal bar chart sorted descending with blue gradient (darker = higher values), values formatted as $300K/$2M
+   - **Revenue by State**: US choropleth map with blue gradient color-coding by revenue amount
+   - **Satisfaction vs Delivery**: Bar chart showing average review score by delivery time buckets (1-3 days, 4-7 days, 8+ days)
+
+4. **Bottom Row** (2 cards with uniform height):
+   - **Average Delivery Time**: Days with trend indicator vs previous year
+   - **Review Score**: Large number with star display and "Average Review Score" subtitle
+
+#### Usage Instructions
 
 1. **Launch the dashboard**:
    ```bash
    streamlit run dashboard.py
    ```
 
-2. **Navigate the interface**:
-   - Use the **year filter** in the top-right to select analysis period
-   - View **KPI cards** showing key metrics with trend indicators
-   - Explore **interactive charts** in the 2x2 grid layout
-   - Monitor **customer experience metrics** in the bottom row
+2. **Interactive Features**:
+   - **Date Range Filter**: Select year in top-right dropdown (all charts update automatically)
+   - **Hover Details**: Hover over charts for detailed data points
+   - **Responsive Design**: Layout adapts to different screen sizes
+   - **Real-time Updates**: All visualizations refresh when filter changes
 
-3. **Dashboard Features**:
-   - **Real-time filtering**: All charts update automatically when year is changed
-   - **Professional styling**: Clean, business-ready interface
-   - **Trend indicators**: Green/red arrows showing performance changes
-   - **Formatted values**: Currency displayed as $300K, $2M for readability
+3. **Key Dashboard Features**:
+   - **Professional Styling**: Clean, business-ready interface with uniform card heights
+   - **Trend Indicators**: Color-coded arrows (green ↗ positive, red ↘ negative) with precise percentages
+   - **Currency Formatting**: Values displayed as $300K, $2M for easy reading
+   - **Interactive Charts**: Plotly-powered visualizations with zoom, pan, and hover capabilities
+   - **Error Handling**: Graceful handling of missing data with informative messages
+
+4. **Visual Design**:
+   - Blue gradient color schemes for consistency
+   - No decorative elements or crowding
+   - Professional typography and spacing
+   - Consistent chart heights and margins
 
 ### Notebook Analysis
 

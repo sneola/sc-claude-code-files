@@ -39,10 +39,11 @@ st.markdown("""
         border-radius: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         border: 1px solid #e0e0e0;
-        height: 120px;
+        height: 140px;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        text-align: center;
     }
     
     .metric-value {
@@ -79,7 +80,7 @@ st.markdown("""
         border-radius: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         border: 1px solid #e0e0e0;
-        height: 150px;
+        height: 180px;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -113,6 +114,16 @@ def format_currency(value):
     """Format currency values with K/M suffixes"""
     if abs(value) >= 1e6:
         return f"${value/1e6:.1f}M"
+    elif abs(value) >= 1e3:
+        return f"${value/1e3:.0f}K"
+    else:
+        return f"${value:.0f}"
+
+
+def format_currency_axis(value):
+    """Format currency values for chart axes"""
+    if abs(value) >= 1e6:
+        return f"${value/1e6:.0f}M"
     elif abs(value) >= 1e3:
         return f"${value/1e3:.0f}K"
     else:
@@ -159,7 +170,7 @@ def create_revenue_trend_chart(current_data, previous_data, current_year, previo
                 mode='lines+markers',
                 name=f'{previous_year}',
                 line=dict(color='#ff7f0e', width=3, dash='dash'),
-                marker=dict(size=8)
+                marker=dict(size=8, symbol='diamond')
             ))
         
         fig.update_layout(
@@ -186,39 +197,57 @@ def create_revenue_trend_chart(current_data, previous_data, current_year, previo
             yaxis_title="Revenue"
         )
     
+    # Update Y-axis to show values as $300K instead of $300,000
     fig.update_layout(
         showlegend=True,
         hovermode='x unified',
         plot_bgcolor='white',
         xaxis=dict(showgrid=True, gridcolor='#f0f0f0'),
-        yaxis=dict(showgrid=True, gridcolor='#f0f0f0', tickformat='$,.0f'),
+        yaxis=dict(
+            showgrid=True, 
+            gridcolor='#f0f0f0',
+            tickformat='$,.0s',
+            tickprefix='$',
+            ticksuffix=''
+        ),
         height=350,
         margin=dict(t=50, b=50, l=50, r=50)
     )
+    
+    # Custom format for Y-axis labels
+    fig.update_yaxes(tickmode='linear')
     
     return fig
 
 
 def create_category_chart(sales_data):
-    """Create top 10 categories bar chart"""
+    """Create top 10 categories bar chart sorted descending"""
     if 'product_category_name' not in sales_data.columns:
         return go.Figure().add_annotation(
             text="Product category data not available",
             xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False
         )
     
+    # Sort descending and take top 10, then reverse for bottom-to-top display
     category_revenue = sales_data.groupby('product_category_name')['price'].sum().sort_values(ascending=True).tail(10)
+    
+    # Create blue gradient colors from light to dark (higher values = darker)
+    max_val = category_revenue.max()
+    min_val = category_revenue.min()
+    colors = []
+    for val in category_revenue.values:
+        # Normalize value to 0-1 range for color intensity
+        intensity = (val - min_val) / (max_val - min_val) if max_val != min_val else 0.5
+        # Create blue color with varying intensity
+        blue_intensity = 0.3 + (intensity * 0.7)  # Range from light blue to dark blue
+        colors.append(f'rgba(31, 119, 180, {blue_intensity})')
     
     fig = go.Figure(data=[
         go.Bar(
             y=category_revenue.index,
             x=category_revenue.values,
             orientation='h',
-            marker=dict(
-                color=category_revenue.values,
-                colorscale='Blues',
-                showscale=False
-            ),
+            marker=dict(color=colors),
             text=[format_currency(x) for x in category_revenue.values],
             textposition='outside',
             hovertemplate='%{y}<br>Revenue: %{text}<extra></extra>'
@@ -230,7 +259,12 @@ def create_category_chart(sales_data):
         xaxis_title="Revenue",
         yaxis_title="",
         plot_bgcolor='white',
-        xaxis=dict(showgrid=True, gridcolor='#f0f0f0', tickformat='$,.0f'),
+        xaxis=dict(
+            showgrid=True, 
+            gridcolor='#f0f0f0',
+            tickformat='$,.0s',
+            tickprefix='$'
+        ),
         yaxis=dict(showgrid=False),
         height=350,
         margin=dict(t=50, b=50, l=150, r=50)
@@ -337,11 +371,11 @@ def main():
         st.error("Failed to load data. Please check your data files.")
         return
     
-    # Header with title and date filters
-    col1, col2, col3 = st.columns([2, 1, 1])
+    # Header with title and date range filter
+    col1, col2 = st.columns([3, 1])
     
     with col1:
-        st.title("📊 E-commerce Analytics Dashboard")
+        st.title("E-commerce Analytics Dashboard")
     
     with col2:
         # Get available years from data
@@ -354,24 +388,14 @@ def main():
             default_year_index = available_years.index(2023)
         
         selected_year = st.selectbox(
-            "Select Year",
+            "Date Range Filter",
             options=available_years,
             index=default_year_index,
             key="year_filter"
         )
     
-    with col3:
-        # Month filter
-        month_options = ['All Months'] + [f'Month {i}' for i in range(1, 13)]
-        selected_month_display = st.selectbox(
-            "Select Month",
-            options=month_options,
-            index=0,
-            key="month_filter"
-        )
-        
-        # Convert display to actual month number
-        selected_month = None if selected_month_display == 'All Months' else int(selected_month_display.split(' ')[1])
+    # For simplicity, we'll analyze full year data (remove month filter)
+    selected_month = None
     
     # Create datasets based on selected year and month
     current_data = loader.create_sales_dataset(
@@ -425,7 +449,7 @@ def main():
         <div class="metric-card">
             <p class="metric-label">Monthly Growth</p>
             <p class="metric-value">{monthly_growth:.2f}%</p>
-            <p class="metric-trend"><span class="{color_class}">{arrow}</span></p>
+            <p class="metric-trend"><span class="{color_class}">{arrow} {abs(monthly_growth):.2f}%</span></p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -504,23 +528,26 @@ def main():
             """, unsafe_allow_html=True)
     
     with bottom_col2:
-        # Review score
+        # Review score with large number and stars
         if 'review_score' in current_data.columns:
             avg_review = current_data['review_score'].mean()
-            stars = "★" * int(round(avg_review))
+            # Create star display (filled stars for whole numbers, up to 5)
+            full_stars = int(avg_review)
+            half_star = "☆" if (avg_review - full_stars) >= 0.5 else ""
+            stars = "★" * full_stars + half_star + "☆" * (5 - full_stars - (1 if half_star else 0))
             
             st.markdown(f"""
             <div class="bottom-card">
+                <p class="metric-value" style="font-size: 3rem;">{avg_review:.1f}</p>
+                <p class="stars" style="font-size: 1.5rem; margin: 0.5rem 0;">{stars}</p>
                 <p class="metric-label">Average Review Score</p>
-                <p class="metric-value">{avg_review:.1f}/5.0</p>
-                <p class="stars">{stars}</p>
             </div>
             """, unsafe_allow_html=True)
         else:
             st.markdown("""
             <div class="bottom-card">
-                <p class="metric-label">Average Review Score</p>
                 <p class="metric-value">N/A</p>
+                <p class="metric-label">Average Review Score</p>
                 <p class="metric-trend">Data not available</p>
             </div>
             """, unsafe_allow_html=True)
